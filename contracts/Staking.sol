@@ -66,7 +66,8 @@ contract StakingContract is Ownable, Pausable, ReentrancyGuard {
         maxUserBalance=_maxUserBalance;
     }
     
-    function startStaking() external onlyOwner {    
+    function startStaking() external onlyOwner {
+    require(startBlock==0,"Staking already started");    
     startBlock=block.timestamp;
     rewardRateTimestamp.push(startBlock);
     }
@@ -247,7 +248,7 @@ contract StakingContract is Ownable, Pausable, ReentrancyGuard {
         require(startBlock > 0, 'Staking not yet started');
         
         UserInfo storage user = userInfo[_user];
-        require(user.balance > 0, "No staked amount");
+        // require(user.balance > 0, "No staked amount");
         uint256 index = user.first;
         uint256 secondsStaked = 0;
         uint256 amountStaked = 0;
