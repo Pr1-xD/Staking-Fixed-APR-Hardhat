@@ -1,14 +1,11 @@
-# Sample Hardhat Project
+# Fixed APR Staking
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+Hardhat Setup for Fixed APR Staking
 
-Try running some of the following tasks:
+Commands:
 
 ```shell
-npx hardhat help
 npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
 npx hardhat run scripts/deploy.js
+npx hardhat verify --network polygon_mumbai DEPLOYED_CONTRACT_ADDRESS "Constructor argument 1"
 ```
-# Staking-Fixed-APR-Hardhat
