@@ -173,6 +173,7 @@ contract StakingContract is Ownable, Pausable, ReentrancyGuard {
     function withdraw(uint256 amount) public nonReentrant {
         UserInfo storage user = userInfo[msg.sender];
         require(amount > 0 && user.balance >= amount, "Invalid amount");
+        require(unlockedBalance(msg.sender)>=amount,"Amount greater than unlocked amount");
 
         uint256 feeAmount = 0;
         uint256 index = user.first;
@@ -300,6 +301,28 @@ contract StakingContract is Ownable, Pausable, ReentrancyGuard {
         poolBalance = poolBalance.sub(amount);
 
         emit Withdraw(msg.sender, amount);
+    }
+
+    /**
+     * @dev Function to withdraw complete deposited amount
+     */
+    function unlockedBalance(address userAddress) public view returns (uint256){           
+        UserInfo storage user = userInfo[userAddress];
+        uint256 index = user.first;
+        uint256 unlockedAmount = 0;
+        while(index <= user.last){
+            uint256 secondsStaked=block.timestamp - user.depositTimestamp[index];
+            if(secondsStaked >= 86400)
+            {
+                unlockedAmount=unlockedAmount + user.depositAmount[index];
+            }
+            else
+            {
+                break;
+            }
+            index = index + 1;
+        }
+        return unlockedAmount;
     }
 
     /**

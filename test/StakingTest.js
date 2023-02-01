@@ -11,7 +11,7 @@ describe("Staking contract", function () {
     const [owner, addr1, addr2] = await ethers.getSigners();
 
     const tokenContract = await TokenContract.deploy("ST","ST");
-    const stakingContract = await StakingContract.deploy(tokenContract.address,1,addr1.address,500,5000);
+    const stakingContract = await StakingContract.deploy(tokenContract.address,30,addr1.address,500,5000);
     
     return {  tokenContract, stakingContract, owner, addr1, addr2 };
   }
@@ -62,8 +62,18 @@ describe("Staking contract", function () {
       await tokenContract.approve(stakingContract.address,1000)
       await stakingContract.startStaking();
       await stakingContract.deposit(1000);
+      await time.increase(3600*25);
       await stakingContract.withdraw(1000);
       expect(await stakingContract.balanceOf(owner.address)).to.equal(0);
+    });
+
+    it("Withdrawal fail before 24hrs", async function () {
+      const { tokenContract,stakingContract, owner,addr1 } = await loadFixture(deployContractsFixture);
+      await tokenContract._mint(owner.address,1000)
+      await tokenContract.approve(stakingContract.address,1000)
+      await stakingContract.startStaking();
+      await stakingContract.deposit(1000);
+      await expect(stakingContract.withdraw(1000)).to.be.revertedWith("Amount greater than unlocked amount");
     });
 
     it("Complex Withdraw", async function () {
@@ -74,8 +84,25 @@ describe("Staking contract", function () {
       await stakingContract.deposit(1000);
       await stakingContract.deposit(500);
       await stakingContract.deposit(2000);
+      await time.increase(3600*25);
       await stakingContract.withdraw(1700);
       expect(await tokenContract.balanceOf(owner.address)).to.equal(2200);
+    });
+
+    it("Complex Withdraw 2", async function () {
+      const { tokenContract,stakingContract, owner,addr1 } = await loadFixture(deployContractsFixture);
+      await tokenContract._mint(owner.address,4000)
+      await tokenContract.approve(stakingContract.address,10000)
+      await stakingContract.startStaking();
+      await stakingContract.deposit(1000);
+      await stakingContract.deposit(500);
+      await stakingContract.deposit(2000);
+      await time.increase(3600*25);
+      await stakingContract.withdraw(1700);
+      await stakingContract.deposit(2000);
+      await time.increase(3600*25);
+      await stakingContract.withdraw(1700);
+      expect(await tokenContract.balanceOf(owner.address)).to.equal(1900);
     });
 
     it("Checking withdrawal fee", async function () {
@@ -85,6 +112,7 @@ describe("Staking contract", function () {
       await stakingContract.startStaking();
       await stakingContract.deposit(1000);
       await stakingContract.setWithdrawalFee(100)
+      await time.increase(3600*25);
       await stakingContract.withdraw(1000);
       
       expect(await tokenContract.balanceOf(addr1.address)).to.equal(0.01*1000);
@@ -97,7 +125,7 @@ describe("Staking contract", function () {
       await stakingContract.startStaking();
       await stakingContract.deposit(1000);
       await stakingContract.setWithdrawalFee(100)
-      await time.increase(3600*25);
+      await time.increase(3600*24*30);
       await stakingContract.withdraw(1000);
       
       expect(await tokenContract.balanceOf(addr1.address)).to.equal(0);
@@ -110,8 +138,9 @@ describe("Staking contract", function () {
       await stakingContract.startStaking();
       await stakingContract.deposit(1000);
       await stakingContract.setWithdrawalFee(100)
-      await time.increase(3600*25);
+      await time.increase(3600*24*30);
       await stakingContract.deposit(1000);
+      await time.increase(3600*24);
       await stakingContract.withdraw(1500);
       
       expect(await tokenContract.balanceOf(addr1.address)).to.equal(0.01*500);
